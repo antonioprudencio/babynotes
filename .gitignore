@@ -1,0 +1,67 @@
+# =========================
+# Android Studio / IntelliJ
+# =========================
+.idea/
+*.iml
+
+# =========================
+# Gradle
+# =========================
+.gradle/
+build/
+**/build/
+
+# =========================
+# Local configs
+# =========================
+local.properties
+
+# =========================
+# Android
+# =========================
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# NDK / CMake
+# =========================
+.cxx/
+externalNativeBuild/
+
+# =========================
+# Keystore (SEGURANÇA)
+# =========================
+*.jks
+*.keystore
+
+# =========================
+# Fastlane (se usar)
+# =========================
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output
+
+# =========================
+# Kotlin
+# =========================
+*.kotlin_module
+
+# =========================
+# Firebase / Crashlytics
+# =========================
+google-services.json
