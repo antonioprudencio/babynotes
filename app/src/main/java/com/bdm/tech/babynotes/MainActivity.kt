@@ -7,10 +7,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.bdm.tech.babynotes.data.BabyNotesDatabase
+import com.bdm.tech.babynotes.data.BabyNotesRepository
+import com.bdm.tech.babynotes.ui.BabyNotesScreen
+import com.bdm.tech.babynotes.ui.BabyNotesViewModel
+import com.bdm.tech.babynotes.ui.BabyNotesViewModelFactory
 import com.bdm.tech.babynotes.ui.theme.BabyNotesTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +24,25 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BabyNotesTheme {
+                val context = LocalContext.current
+                val database = remember { BabyNotesDatabase.getInstance(context) }
+                val repository = remember(database) {
+                    BabyNotesRepository(
+                        database.babyDao(),
+                        database.feedingDao(),
+                        database.medicineDao()
+                    )
+                }
+                val viewModel: BabyNotesViewModel = viewModel(
+                    factory = BabyNotesViewModelFactory(repository)
+                )
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
+                    BabyNotesScreen(
+                        viewModel = viewModel,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BabyNotesTheme {
-        Greeting("Android")
     }
 }
