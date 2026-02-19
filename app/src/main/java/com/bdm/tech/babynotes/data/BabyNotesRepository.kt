@@ -18,14 +18,13 @@ class BabyNotesRepository(
     suspend fun deleteBaby(id: Long) = babyDao.deleteById(id)
 
     /**
-     * Horário é atribuído aqui (timestampMillis) no momento do insert.
-     * babyId, feedingType e volume vêm do diálogo.
+     * babyId, feedingType, volume e timestampMillis vêm do diálogo (timestamp editável).
      */
-    suspend fun addFeeding(babyId: Long, feedingType: FeedingType, volume: Int = 0) {
+    suspend fun addFeeding(babyId: Long, feedingType: FeedingType, volume: Int = 0, timestampMillis: Long = System.currentTimeMillis()) {
         feedingDao.insert(
             FeedingRecord(
                 babyId = babyId,
-                timestampMillis = System.currentTimeMillis(),
+                timestampMillis = timestampMillis,
                 feedingType = feedingType,
                 volume = volume
             )
@@ -33,14 +32,13 @@ class BabyNotesRepository(
     }
 
     /**
-     * Horário é atribuído aqui (timestampMillis) no momento do insert.
-     * babyId e note (descrição) vêm do diálogo.
+     * babyId, note e timestampMillis vêm do diálogo (timestamp editável).
      */
-    suspend fun addMedicine(babyId: Long, note: String = "") {
+    suspend fun addMedicine(babyId: Long, note: String = "", timestampMillis: Long = System.currentTimeMillis()) {
         medicineDao.insert(
             MedicineRecord(
                 babyId = babyId,
-                timestampMillis = System.currentTimeMillis(),
+                timestampMillis = timestampMillis,
                 note = note
             )
         )

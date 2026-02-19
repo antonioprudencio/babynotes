@@ -10,7 +10,7 @@ fun formatTime(timestampMillis: Long): String {
     val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
     val today = System.currentTimeMillis()
     val isToday = timestampMillis in (today - 86400_000)..(today + 86400_000)
-    return if (isToday) timeFormat.format(date) else "$dateFormat.format(date) ${timeFormat.format(date)}"
+    return if (isToday) timeFormat.format(date) else "${dateFormat.format(date)} ${timeFormat.format(date)}"
 }
 
 fun formatDateTime(timestampMillis: Long): String {
