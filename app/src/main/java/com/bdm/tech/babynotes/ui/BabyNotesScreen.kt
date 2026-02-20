@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Medication
@@ -47,12 +48,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.bdm.tech.babynotes.data.Baby
+import java.util.Calendar
 import com.bdm.tech.babynotes.data.FeedingRecord
 import com.bdm.tech.babynotes.data.FeedingType
 import com.bdm.tech.babynotes.data.MedicineRecord
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 
 @Composable
 fun BabyNotesScreen(
@@ -82,11 +87,18 @@ fun BabyNotesScreen(
                 text = { Text("Medicamentos") },
                 icon = { Icon(Icons.Default.Medication, contentDescription = null) }
             )
+            Tab(
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 },
+                text = { Text("Estatísticas") },
+                icon = { Icon(Icons.Default.BarChart, contentDescription = null) }
+            )
         }
         when (selectedTab) {
             0 -> BabiesTab(viewModel = viewModel, babies = babies)
             1 -> FeedingsTab(viewModel = viewModel, babies = babies)
             2 -> MedicineTab(viewModel = viewModel, babies = babies)
+            3 -> StatisticsTab(viewModel = viewModel)
         }
     }
 }
@@ -256,8 +268,8 @@ private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
         AddFeedingDialog(
             babies = babies,
             onDismiss = { showAddDialog = false },
-            onConfirm = { babyId: Long, feedingType: FeedingType, volume: Int ->
-                viewModel.addFeeding(babyId, feedingType, volume)
+            onConfirm = { babyId: Long, feedingType: FeedingType, volume: Int, timestampMillis: Long ->
+                viewModel.addFeeding(babyId, feedingType, volume, timestampMillis)
                 showAddDialog = false
             }
         )
@@ -333,11 +345,116 @@ private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
         AddMedicineDialog(
             babies = babies,
             onDismiss = { showAddDialog = false },
-            onConfirm = { babyId: Long, note: String ->
-                viewModel.addMedicine(babyId, note)
+            onConfirm = { babyId: Long, note: String, timestampMillis: Long ->
+                viewModel.addMedicine(babyId, note, timestampMillis)
                 showAddDialog = false
             }
         )
+    }
+}
+
+@Composable
+private fun StatisticsTab(viewModel: BabyNotesViewModel) {
+    val stats by viewModel.consumptionStats.collectAsState()
+    val selectedPeriod by viewModel.selectedPeriod.collectAsState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterPeriod.entries.forEach { period ->
+                val selected = period == selectedPeriod
+                androidx.compose.material3.FilterChip(
+                    selected = selected,
+                    onClick = { viewModel.setPeriod(period) },
+                    label = { Text(period.label) }
+                )
+            }
+        }
+        if (stats.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    Icons.Default.BarChart,
+                    contentDescription = null,
+                    modifier = Modifier.padding(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    "Nenhum consumo registrado no período",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "Registre refeições na aba Refeições",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.outline
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(stats) { stat ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerHigh),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.ChildCare,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                                Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                                Text(
+                                    stat.babyName,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Total: ${stat.totalVolumeMl} ml",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                "${stat.feedingCount} refeições",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline
+                            )
+                            stat.averagePerDayMl?.let { avg ->
+                                Text(
+                                    "Média por dia: ${avg.toInt()} ml",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -446,6 +563,53 @@ private fun MedicineItem(
 }
 
 @Composable
+private fun EditableDateTimeRow(
+    selectedTimestamp: Long,
+    onTimestampChange: (Long) -> Unit
+) {
+    val context = LocalContext.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            formatDateTime(selectedTimestamp),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
+        TextButton(onClick = {
+            val cal = Calendar.getInstance().apply { timeInMillis = selectedTimestamp }
+            DatePickerDialog(
+                context,
+                { _, year, month, dayOfMonth ->
+                    cal.set(Calendar.YEAR, year)
+                    cal.set(Calendar.MONTH, month)
+                    cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                    TimePickerDialog(
+                        context,
+                        { _, hourOfDay, minute ->
+                            cal.set(Calendar.HOUR_OF_DAY, hourOfDay)
+                            cal.set(Calendar.MINUTE, minute)
+                            cal.set(Calendar.SECOND, 0)
+                            cal.set(Calendar.MILLISECOND, 0)
+                            onTimestampChange(cal.timeInMillis)
+                        },
+                        cal.get(Calendar.HOUR_OF_DAY),
+                        cal.get(Calendar.MINUTE),
+                        true
+                    ).show()
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }) {
+            Text("Alterar")
+        }
+    }
+}
+
+@Composable
 private fun AddBabyDialog(
     onDismiss: () -> Unit,
     onConfirm: (String) -> Unit
@@ -481,11 +645,12 @@ private fun AddBabyDialog(
 private fun AddFeedingDialog(
     babies: List<Baby>,
     onDismiss: () -> Unit,
-    onConfirm: (babyId: Long, feedingType: FeedingType, volume: Int) -> Unit
+    onConfirm: (babyId: Long, feedingType: FeedingType, volume: Int, timestampMillis: Long) -> Unit
 ) {
     var selectedBaby by remember { mutableStateOf(babies.firstOrNull()) }
     var selectedFeedingType by remember { mutableStateOf(FeedingType.MAMA) }
     var volumeStr by remember { mutableStateOf("") }
+    var selectedTimestamp by remember { mutableStateOf(System.currentTimeMillis()) }
     var expandedBaby by remember { mutableStateOf(false) }
     var expandedType by remember { mutableStateOf(false) }
     val currentBaby = selectedBaby ?: babies.firstOrNull()
@@ -495,9 +660,11 @@ private fun AddFeedingDialog(
         title = { Text("Registrar refeição") },
         text = {
             Column {
-                Text(
-                    "Horário: ${formatDateTime(System.currentTimeMillis())}",
-                    style = MaterialTheme.typography.bodyMedium
+                Text("Data e hora", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                EditableDateTimeRow(
+                    selectedTimestamp = selectedTimestamp,
+                    onTimestampChange = { selectedTimestamp = it }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 ExposedDropdownMenuBox(
@@ -577,7 +744,7 @@ private fun AddFeedingDialog(
                 onClick = {
                     currentBaby?.let {
                         val volume = volumeStr.toIntOrNull() ?: 0
-                        onConfirm(it.id, selectedFeedingType, volume)
+                        onConfirm(it.id, selectedFeedingType, volume, selectedTimestamp)
                     }
                 }
             ) {
@@ -597,10 +764,11 @@ private fun AddFeedingDialog(
 private fun AddMedicineDialog(
     babies: List<Baby>,
     onDismiss: () -> Unit,
-    onConfirm: (babyId: Long, note: String) -> Unit
+    onConfirm: (babyId: Long, note: String, timestampMillis: Long) -> Unit
 ) {
     var selectedBaby by remember { mutableStateOf(babies.firstOrNull()) }
     var note by remember { mutableStateOf("") }
+    var selectedTimestamp by remember { mutableStateOf(System.currentTimeMillis()) }
     var expanded by remember { mutableStateOf(false) }
     val currentBaby = selectedBaby ?: babies.firstOrNull()
 
@@ -609,9 +777,11 @@ private fun AddMedicineDialog(
         title = { Text("Registrar medicamento") },
         text = {
             Column {
-                Text(
-                    "Horário: ${formatDateTime(System.currentTimeMillis())}",
-                    style = MaterialTheme.typography.bodyMedium
+                Text("Data e hora", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                EditableDateTimeRow(
+                    selectedTimestamp = selectedTimestamp,
+                    onTimestampChange = { selectedTimestamp = it }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 ExposedDropdownMenuBox(
@@ -657,7 +827,7 @@ private fun AddMedicineDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    currentBaby?.let { onConfirm(it.id, note.trim()) }
+                    currentBaby?.let { onConfirm(it.id, note.trim(), selectedTimestamp) }
                 }
             ) {
                 Text("Registrar")
