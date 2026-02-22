@@ -3,12 +3,11 @@ package com.bdm.tech.babynotes.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "feedings")
-data class FeedingRecord(
+@Entity(tableName = "hygiene")
+data class HygieneRecord(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val babyId: Long,
     val timestampMillis: Long,
-    val feedingType: FeedingType = FeedingType.MAMADEIRA,
-    val volume: Int = 0
+    val note: String = ""
 )

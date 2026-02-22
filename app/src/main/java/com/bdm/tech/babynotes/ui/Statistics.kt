@@ -5,7 +5,8 @@ import java.util.Calendar
 enum class FilterPeriod(val label: String) {
     TODAY("Hoje"),
     WEEK("Semana"),
-    MONTH("Mês")
+    MONTH("Mês"),
+    ALL("Todos")
 }
 
 data class BabyConsumptionStats(
@@ -19,6 +20,9 @@ data class BabyConsumptionStats(
 object StatisticsHelper {
 
     fun periodRange(period: FilterPeriod): Pair<Long, Long> {
+        if (period == FilterPeriod.ALL) {
+            return 0L to Long.MAX_VALUE
+        }
         val cal = Calendar.getInstance()
         val endOfToday = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 23)
@@ -51,6 +55,7 @@ object StatisticsHelper {
                 cal.set(Calendar.MILLISECOND, 0)
                 cal.timeInMillis
             }
+            FilterPeriod.ALL -> 0L
         }
         return start to endOfToday
     }
@@ -59,5 +64,6 @@ object StatisticsHelper {
         FilterPeriod.TODAY -> 1
         FilterPeriod.WEEK -> 7
         FilterPeriod.MONTH -> Calendar.getInstance().get(Calendar.DAY_OF_MONTH).coerceAtLeast(1)
+        FilterPeriod.ALL -> 1
     }
 }

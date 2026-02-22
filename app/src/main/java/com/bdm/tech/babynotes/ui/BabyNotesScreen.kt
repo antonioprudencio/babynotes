@@ -18,6 +18,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Bathtub
 import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Medication
@@ -55,6 +56,7 @@ import com.bdm.tech.babynotes.data.Baby
 import java.util.Calendar
 import com.bdm.tech.babynotes.data.FeedingRecord
 import com.bdm.tech.babynotes.data.FeedingType
+import com.bdm.tech.babynotes.data.HygieneRecord
 import com.bdm.tech.babynotes.data.MedicineRecord
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -90,6 +92,12 @@ fun BabyNotesScreen(
             Tab(
                 selected = selectedTab == 3,
                 onClick = { selectedTab = 3 },
+                text = { Text("Higiene") },
+                icon = { Icon(Icons.Default.Bathtub, contentDescription = null) }
+            )
+            Tab(
+                selected = selectedTab == 4,
+                onClick = { selectedTab = 4 },
                 text = { Text("Estatísticas") },
                 icon = { Icon(Icons.Default.BarChart, contentDescription = null) }
             )
@@ -98,7 +106,8 @@ fun BabyNotesScreen(
             0 -> BabiesTab(viewModel = viewModel, babies = babies)
             1 -> FeedingsTab(viewModel = viewModel, babies = babies)
             2 -> MedicineTab(viewModel = viewModel, babies = babies)
-            3 -> StatisticsTab(viewModel = viewModel)
+            3 -> HygieneTab(viewModel = viewModel, babies = babies)
+            4 -> StatisticsTab(viewModel = viewModel)
         }
     }
 }
@@ -201,7 +210,8 @@ private fun BabyItem(baby: Baby, onDelete: () -> Unit) {
 
 @Composable
 private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
-    val feedings by viewModel.feedings.collectAsState()
+    val feedings by viewModel.filteredFeedings.collectAsState()
+    val filterPeriod by viewModel.feedingsFilterPeriod.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -209,6 +219,20 @@ private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
             EmptyBabiesMessage()
         } else {
             Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    FilterPeriod.entries.forEach { period ->
+                        androidx.compose.material3.FilterChip(
+                            selected = period == filterPeriod,
+                            onClick = { viewModel.setFeedingsFilterPeriod(period) },
+                            label = { Text(period.label, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
                 if (feedings.isEmpty()) {
                     Column(
                         modifier = Modifier
@@ -225,7 +249,7 @@ private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            "Nenhuma refeição registrada",
+                            "Nenhuma refeição no período",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -278,7 +302,8 @@ private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
 
 @Composable
 private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
-    val medicine by viewModel.medicine.collectAsState()
+    val medicine by viewModel.filteredMedicine.collectAsState()
+    val filterPeriod by viewModel.medicineFilterPeriod.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -286,6 +311,20 @@ private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
             EmptyBabiesMessage()
         } else {
             Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    FilterPeriod.entries.forEach { period ->
+                        androidx.compose.material3.FilterChip(
+                            selected = period == filterPeriod,
+                            onClick = { viewModel.setMedicineFilterPeriod(period) },
+                            label = { Text(period.label, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
                 if (medicine.isEmpty()) {
                     Column(
                         modifier = Modifier
@@ -302,7 +341,7 @@ private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
                             tint = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            "Nenhum medicamento registrado",
+                            "Nenhum medicamento no período",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -347,6 +386,97 @@ private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
             onDismiss = { showAddDialog = false },
             onConfirm = { babyId: Long, note: String, timestampMillis: Long ->
                 viewModel.addMedicine(babyId, note, timestampMillis)
+                showAddDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun HygieneTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
+    val hygiene by viewModel.filteredHygiene.collectAsState()
+    val filterPeriod by viewModel.hygieneFilterPeriod.collectAsState()
+    var showAddDialog by remember { mutableStateOf(false) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (babies.isEmpty()) {
+            EmptyBabiesMessage()
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    FilterPeriod.entries.forEach { period ->
+                        androidx.compose.material3.FilterChip(
+                            selected = period == filterPeriod,
+                            onClick = { viewModel.setHygieneFilterPeriod(period) },
+                            label = { Text(period.label, style = MaterialTheme.typography.labelSmall) }
+                        )
+                    }
+                }
+                if (hygiene.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            Icons.Default.Bathtub,
+                            contentDescription = null,
+                            modifier = Modifier.padding(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            "Nenhum registro de higiene no período",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            "Toque em + para registrar",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.outline
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(hygiene, key = { it.id }) { record ->
+                            HygieneItem(
+                                record = record,
+                                babyName = babies.find { it.id == record.babyId }?.name ?: "",
+                                onDelete = { viewModel.deleteHygiene(record.id) }
+                            )
+                        }
+                    }
+                }
+            }
+            FloatingActionButton(
+                onClick = { showAddDialog = true },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Registrar higiene")
+            }
+        }
+    }
+    if (showAddDialog && babies.isNotEmpty()) {
+        AddHygieneDialog(
+            babies = babies,
+            onDismiss = { showAddDialog = false },
+            onConfirm = { babyId: Long, note: String, timestampMillis: Long ->
+                viewModel.addHygiene(babyId, note, timestampMillis)
                 showAddDialog = false
             }
         )
@@ -563,6 +693,47 @@ private fun MedicineItem(
 }
 
 @Composable
+private fun HygieneItem(
+    record: HygieneRecord,
+    babyName: String,
+    onDelete: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    formatTime(record.timestampMillis),
+                    style = MaterialTheme.typography.titleMedium
+                )
+                val description = buildList {
+                    if (babyName.isNotBlank()) add(babyName)
+                    if (record.note.isNotBlank()) add(record.note)
+                }.joinToString(" • ")
+                if (description.isNotBlank()) {
+                    Text(
+                        description,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Excluir")
+            }
+        }
+    }
+}
+
+@Composable
 private fun EditableDateTimeRow(
     selectedTimestamp: Long,
     onTimestampChange: (Long) -> Unit
@@ -648,7 +819,7 @@ private fun AddFeedingDialog(
     onConfirm: (babyId: Long, feedingType: FeedingType, volume: Int, timestampMillis: Long) -> Unit
 ) {
     var selectedBaby by remember { mutableStateOf(babies.firstOrNull()) }
-    var selectedFeedingType by remember { mutableStateOf(FeedingType.MAMA) }
+    var selectedFeedingType by remember { mutableStateOf(FeedingType.MAMADEIRA) }
     var volumeStr by remember { mutableStateOf("") }
     var selectedTimestamp by remember { mutableStateOf(System.currentTimeMillis()) }
     var expandedBaby by remember { mutableStateOf(false) }
@@ -819,6 +990,88 @@ private fun AddMedicineDialog(
                     value = note,
                     onValueChange = { note = it },
                     label = { Text("Descrição (ex: nome do medicamento)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    currentBaby?.let { onConfirm(it.id, note.trim(), selectedTimestamp) }
+                }
+            ) {
+                Text("Registrar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AddHygieneDialog(
+    babies: List<Baby>,
+    onDismiss: () -> Unit,
+    onConfirm: (babyId: Long, note: String, timestampMillis: Long) -> Unit
+) {
+    var selectedBaby by remember { mutableStateOf(babies.firstOrNull()) }
+    var note by remember { mutableStateOf("") }
+    var selectedTimestamp by remember { mutableStateOf(System.currentTimeMillis()) }
+    var expanded by remember { mutableStateOf(false) }
+    val currentBaby = selectedBaby ?: babies.firstOrNull()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Registrar higiene") },
+        text = {
+            Column {
+                Text("Data e hora", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                EditableDateTimeRow(
+                    selectedTimestamp = selectedTimestamp,
+                    onTimestampChange = { selectedTimestamp = it }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = currentBaby?.name ?: "Selecione o bebê",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Bebê") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        babies.forEach { baby ->
+                            DropdownMenuItem(
+                                text = { Text(baby.name) },
+                                onClick = {
+                                    selectedBaby = baby
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                TextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Descrição (ex: banho, troca de fralda)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )

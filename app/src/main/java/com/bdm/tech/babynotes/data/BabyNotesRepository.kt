@@ -5,11 +5,13 @@ import kotlinx.coroutines.flow.Flow
 class BabyNotesRepository(
     private val babyDao: BabyDao,
     private val feedingDao: FeedingDao,
-    private val medicineDao: MedicineDao
+    private val medicineDao: MedicineDao,
+    private val hygieneDao: HygieneDao
 ) {
     val allBabies: Flow<List<Baby>> = babyDao.getAllFlow()
     val allFeedings: Flow<List<FeedingRecord>> = feedingDao.getAllFlow()
     val allMedicine: Flow<List<MedicineRecord>> = medicineDao.getAllFlow()
+    val allHygiene: Flow<List<HygieneRecord>> = hygieneDao.getAllFlow()
 
     suspend fun addBaby(name: String) {
         babyDao.insert(Baby(name = name.trim()))
@@ -44,6 +46,17 @@ class BabyNotesRepository(
         )
     }
 
+    suspend fun addHygiene(babyId: Long, note: String = "", timestampMillis: Long = System.currentTimeMillis()) {
+        hygieneDao.insert(
+            HygieneRecord(
+                babyId = babyId,
+                timestampMillis = timestampMillis,
+                note = note
+            )
+        )
+    }
+
     suspend fun deleteFeeding(id: Long) = feedingDao.deleteById(id)
     suspend fun deleteMedicine(id: Long) = medicineDao.deleteById(id)
+    suspend fun deleteHygiene(id: Long) = hygieneDao.deleteById(id)
 }

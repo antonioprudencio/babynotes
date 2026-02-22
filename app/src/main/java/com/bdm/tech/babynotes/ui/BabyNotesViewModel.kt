@@ -7,6 +7,7 @@ import com.bdm.tech.babynotes.data.Baby
 import com.bdm.tech.babynotes.data.BabyNotesRepository
 import com.bdm.tech.babynotes.data.FeedingRecord
 import com.bdm.tech.babynotes.data.FeedingType
+import com.bdm.tech.babynotes.data.HygieneRecord
 import com.bdm.tech.babynotes.data.MedicineRecord
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +28,30 @@ class BabyNotesViewModel(
 
     val medicine: StateFlow<List<MedicineRecord>> = repository.allMedicine
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val hygiene: StateFlow<List<HygieneRecord>> = repository.allHygiene
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _feedingsFilterPeriod = MutableStateFlow(FilterPeriod.TODAY)
+    val feedingsFilterPeriod: StateFlow<FilterPeriod> = _feedingsFilterPeriod
+    val filteredFeedings: StateFlow<List<FeedingRecord>> = combine(feedings, _feedingsFilterPeriod) { list, period ->
+        val (start, end) = StatisticsHelper.periodRange(period)
+        list.filter { it.timestampMillis in start..end }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _medicineFilterPeriod = MutableStateFlow(FilterPeriod.TODAY)
+    val medicineFilterPeriod: StateFlow<FilterPeriod> = _medicineFilterPeriod
+    val filteredMedicine: StateFlow<List<MedicineRecord>> = combine(medicine, _medicineFilterPeriod) { list, period ->
+        val (start, end) = StatisticsHelper.periodRange(period)
+        list.filter { it.timestampMillis in start..end }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _hygieneFilterPeriod = MutableStateFlow(FilterPeriod.TODAY)
+    val hygieneFilterPeriod: StateFlow<FilterPeriod> = _hygieneFilterPeriod
+    val filteredHygiene: StateFlow<List<HygieneRecord>> = combine(hygiene, _hygieneFilterPeriod) { list, period ->
+        val (start, end) = StatisticsHelper.periodRange(period)
+        list.filter { it.timestampMillis in start..end }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _selectedPeriod = MutableStateFlow(FilterPeriod.TODAY)
     val selectedPeriod: StateFlow<FilterPeriod> = _selectedPeriod
@@ -58,6 +83,18 @@ class BabyNotesViewModel(
         _selectedPeriod.value = period
     }
 
+    fun setFeedingsFilterPeriod(period: FilterPeriod) {
+        _feedingsFilterPeriod.value = period
+    }
+
+    fun setMedicineFilterPeriod(period: FilterPeriod) {
+        _medicineFilterPeriod.value = period
+    }
+
+    fun setHygieneFilterPeriod(period: FilterPeriod) {
+        _hygieneFilterPeriod.value = period
+    }
+
     fun addBaby(name: String) {
         viewModelScope.launch { repository.addBaby(name) }
     }
@@ -74,12 +111,20 @@ class BabyNotesViewModel(
         viewModelScope.launch { repository.addMedicine(babyId, note, timestampMillis) }
     }
 
+    fun addHygiene(babyId: Long, note: String = "", timestampMillis: Long = System.currentTimeMillis()) {
+        viewModelScope.launch { repository.addHygiene(babyId, note, timestampMillis) }
+    }
+
     fun deleteFeeding(id: Long) {
         viewModelScope.launch { repository.deleteFeeding(id) }
     }
 
     fun deleteMedicine(id: Long) {
         viewModelScope.launch { repository.deleteMedicine(id) }
+    }
+
+    fun deleteHygiene(id: Long) {
+        viewModelScope.launch { repository.deleteHygiene(id) }
     }
 }
 
