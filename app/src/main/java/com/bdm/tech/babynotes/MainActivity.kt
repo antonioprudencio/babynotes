@@ -30,7 +30,8 @@ class MainActivity : ComponentActivity() {
                     BabyNotesRepository(
                         database.babyDao(),
                         database.feedingDao(),
-                        database.medicineDao()
+                        database.medicineDao(),
+                        database.hygieneDao()
                     )
                 }
                 val viewModel: BabyNotesViewModel = viewModel(
