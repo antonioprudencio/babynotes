@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Bathtub
 import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material3.AlertDialog
@@ -115,6 +116,7 @@ fun BabyNotesScreen(
 @Composable
 private fun BabiesTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
     var showAddDialog by remember { mutableStateOf(false) }
+    var babyToEdit by remember { mutableStateOf<Baby?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (babies.isEmpty()) {
@@ -152,6 +154,7 @@ private fun BabiesTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
                 items(babies, key = { it.id }) { baby ->
                     BabyItem(
                         baby = baby,
+                        onEdit = { babyToEdit = baby },
                         onDelete = { viewModel.deleteBaby(baby.id) }
                     )
                 }
@@ -175,10 +178,20 @@ private fun BabiesTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
             }
         )
     }
+    babyToEdit?.let { baby ->
+        EditBabyDialog(
+            baby = baby,
+            onDismiss = { babyToEdit = null },
+            onConfirm = { updated ->
+                viewModel.updateBaby(updated)
+                babyToEdit = null
+            }
+        )
+    }
 }
 
 @Composable
-private fun BabyItem(baby: Baby, onDelete: () -> Unit) {
+private fun BabyItem(baby: Baby, onEdit: () -> Unit, onDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -201,6 +214,9 @@ private fun BabyItem(baby: Baby, onDelete: () -> Unit) {
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f)
             )
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar")
+            }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Excluir")
             }
@@ -213,6 +229,7 @@ private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
     val feedings by viewModel.filteredFeedings.collectAsState()
     val filterPeriod by viewModel.feedingsFilterPeriod.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var feedingToEdit by remember { mutableStateOf<FeedingRecord?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (babies.isEmpty()) {
@@ -270,8 +287,8 @@ private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
                         items(feedings) { record ->
                             FeedingItem(
                                 record = record,
-                                // Nome: resolvido aqui a partir do babyId do registro
                                 babyName = babies.find { it.id == record.babyId }?.name ?: "",
+                                onEdit = { feedingToEdit = record },
                                 onDelete = { viewModel.deleteFeeding(record.id) }
                             )
                         }
@@ -298,6 +315,17 @@ private fun FeedingsTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
             }
         )
     }
+    feedingToEdit?.let { record ->
+        EditFeedingDialog(
+            record = record,
+            babies = babies,
+            onDismiss = { feedingToEdit = null },
+            onConfirm = { updated ->
+                viewModel.updateFeeding(updated)
+                feedingToEdit = null
+            }
+        )
+    }
 }
 
 @Composable
@@ -305,6 +333,7 @@ private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
     val medicine by viewModel.filteredMedicine.collectAsState()
     val filterPeriod by viewModel.medicineFilterPeriod.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var medicineToEdit by remember { mutableStateOf<MedicineRecord?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (babies.isEmpty()) {
@@ -361,10 +390,10 @@ private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
                     ) {
                         items(medicine, key = { it.id }) { record ->
                             MedicineItem(
-                                record = record,
-                                // Nome: resolvido aqui a partir do babyId do registro
-                                babyName = babies.find { it.id == record.babyId }?.name ?: "",
-                                onDelete = { viewModel.deleteMedicine(record.id) }
+                                record,
+                                babies.find { it.id == record.babyId }?.name ?: "",
+                                { medicineToEdit = record },
+                                { viewModel.deleteMedicine(record.id) }
                             )
                         }
                     }
@@ -390,6 +419,17 @@ private fun MedicineTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
             }
         )
     }
+    medicineToEdit?.let { record ->
+        EditMedicineDialog(
+            record = record,
+            babies = babies,
+            onDismiss = { medicineToEdit = null },
+            onConfirm = { updated ->
+                viewModel.updateMedicine(updated)
+                medicineToEdit = null
+            }
+        )
+    }
 }
 
 @Composable
@@ -397,6 +437,7 @@ private fun HygieneTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
     val hygiene by viewModel.filteredHygiene.collectAsState()
     val filterPeriod by viewModel.hygieneFilterPeriod.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var hygieneToEdit by remember { mutableStateOf<HygieneRecord?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (babies.isEmpty()) {
@@ -455,6 +496,7 @@ private fun HygieneTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
                             HygieneItem(
                                 record = record,
                                 babyName = babies.find { it.id == record.babyId }?.name ?: "",
+                                onEdit = { hygieneToEdit = record },
                                 onDelete = { viewModel.deleteHygiene(record.id) }
                             )
                         }
@@ -478,6 +520,17 @@ private fun HygieneTab(viewModel: BabyNotesViewModel, babies: List<Baby>) {
             onConfirm = { babyId: Long, note: String, timestampMillis: Long ->
                 viewModel.addHygiene(babyId, note, timestampMillis)
                 showAddDialog = false
+            }
+        )
+    }
+    hygieneToEdit?.let { record ->
+        EditHygieneDialog(
+            record = record,
+            babies = babies,
+            onDismiss = { hygieneToEdit = null },
+            onConfirm = { updated ->
+                viewModel.updateHygiene(updated)
+                hygieneToEdit = null
             }
         )
     }
@@ -620,6 +673,7 @@ private fun EmptyBabiesMessage() {
 private fun FeedingItem(
     record: FeedingRecord,
     babyName: String,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -649,6 +703,9 @@ private fun FeedingItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar")
+            }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Excluir")
             }
@@ -660,6 +717,7 @@ private fun FeedingItem(
 private fun MedicineItem(
     record: MedicineRecord,
     babyName: String,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -689,6 +747,9 @@ private fun MedicineItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar")
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Excluir")
@@ -701,6 +762,7 @@ private fun MedicineItem(
 private fun HygieneItem(
     record: HygieneRecord,
     babyName: String,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -730,6 +792,9 @@ private fun HygieneItem(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Default.Edit, contentDescription = "Editar")
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Excluir")
@@ -806,6 +871,38 @@ private fun AddBabyDialog(
         confirmButton = {
             TextButton(onClick = { onConfirm(name.trim()) }) {
                 Text("Adicionar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@Composable
+private fun EditBabyDialog(
+    baby: Baby,
+    onDismiss: () -> Unit,
+    onConfirm: (Baby) -> Unit
+) {
+    var name by remember(baby.id) { mutableStateOf(baby.name) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar bebê") },
+        text = {
+            TextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nome") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(baby.copy(name = name.trim())) }) {
+                Text("Salvar")
             }
         },
         dismissButton = {
@@ -937,6 +1034,133 @@ private fun AddFeedingDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun EditFeedingDialog(
+    record: FeedingRecord,
+    babies: List<Baby>,
+    onDismiss: () -> Unit,
+    onConfirm: (FeedingRecord) -> Unit
+) {
+    var selectedBaby by remember(record.id) { mutableStateOf(babies.find { it.id == record.babyId } ?: babies.firstOrNull()) }
+    var selectedFeedingType by remember(record.id) { mutableStateOf(record.feedingType) }
+    var volumeStr by remember(record.id) { mutableStateOf(record.volume.toString()) }
+    var selectedTimestamp by remember(record.id) { mutableStateOf(record.timestampMillis) }
+    var expandedBaby by remember { mutableStateOf(false) }
+    var expandedType by remember { mutableStateOf(false) }
+    val currentBaby = selectedBaby ?: babies.firstOrNull()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar refeição") },
+        text = {
+            Column {
+                Text("Data e hora", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                EditableDateTimeRow(
+                    selectedTimestamp = selectedTimestamp,
+                    onTimestampChange = { selectedTimestamp = it }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ExposedDropdownMenuBox(
+                    expanded = expandedBaby,
+                    onExpandedChange = { expandedBaby = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = currentBaby?.name ?: "Selecione o bebê",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Bebê") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedBaby) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expandedBaby,
+                        onDismissRequest = { expandedBaby = false }
+                    ) {
+                        babies.forEach { baby ->
+                            DropdownMenuItem(
+                                text = { Text(baby.name) },
+                                onClick = {
+                                    selectedBaby = baby
+                                    expandedBaby = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                ExposedDropdownMenuBox(
+                    expanded = expandedType,
+                    onExpandedChange = { expandedType = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = selectedFeedingType.label,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Tipo") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedType) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expandedType,
+                        onDismissRequest = { expandedType = false }
+                    ) {
+                        FeedingType.entries.forEach { type ->
+                            DropdownMenuItem(
+                                text = { Text(type.label) },
+                                onClick = {
+                                    selectedFeedingType = type
+                                    expandedType = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                TextField(
+                    value = volumeStr,
+                    onValueChange = { newValue -> if (newValue.isEmpty() || newValue.all { c -> c.isDigit() }) volumeStr = newValue },
+                    label = { Text("Volume") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    currentBaby?.let {
+                        val volume = volumeStr.toIntOrNull() ?: 0
+                        onConfirm(
+                            record.copy(
+                                babyId = it.id,
+                                feedingType = selectedFeedingType,
+                                volume = volume,
+                                timestampMillis = selectedTimestamp
+                            )
+                        )
+                    }
+                }
+            ) {
+                Text("Salvar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun AddMedicineDialog(
     babies: List<Baby>,
     onDismiss: () -> Unit,
@@ -1019,6 +1243,97 @@ private fun AddMedicineDialog(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun EditMedicineDialog(
+    record: MedicineRecord,
+    babies: List<Baby>,
+    onDismiss: () -> Unit,
+    onConfirm: (MedicineRecord) -> Unit
+) {
+    var selectedBaby by remember(record.id) { mutableStateOf(babies.find { it.id == record.babyId } ?: babies.firstOrNull()) }
+    var note by remember(record.id) { mutableStateOf(record.note) }
+    var selectedTimestamp by remember(record.id) { mutableStateOf(record.timestampMillis) }
+    var expanded by remember { mutableStateOf(false) }
+    val currentBaby = selectedBaby ?: babies.firstOrNull()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar medicamento") },
+        text = {
+            Column {
+                Text("Data e hora", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                EditableDateTimeRow(
+                    selectedTimestamp = selectedTimestamp,
+                    onTimestampChange = { selectedTimestamp = it }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = currentBaby?.name ?: "Selecione o bebê",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Bebê") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        babies.forEach { baby ->
+                            DropdownMenuItem(
+                                text = { Text(baby.name) },
+                                onClick = {
+                                    selectedBaby = baby
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                TextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Descrição (ex: nome do medicamento)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    currentBaby?.let {
+                        onConfirm(
+                            record.copy(
+                                babyId = it.id,
+                                note = note.trim(),
+                                timestampMillis = selectedTimestamp
+                            )
+                        )
+                    }
+                }
+            ) {
+                Text("Salvar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun AddHygieneDialog(
     babies: List<Baby>,
     onDismiss: () -> Unit,
@@ -1089,6 +1404,97 @@ private fun AddHygieneDialog(
                 }
             ) {
                 Text("Registrar")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditHygieneDialog(
+    record: HygieneRecord,
+    babies: List<Baby>,
+    onDismiss: () -> Unit,
+    onConfirm: (HygieneRecord) -> Unit
+) {
+    var selectedBaby by remember(record.id) { mutableStateOf(babies.find { it.id == record.babyId } ?: babies.firstOrNull()) }
+    var note by remember(record.id) { mutableStateOf(record.note) }
+    var selectedTimestamp by remember(record.id) { mutableStateOf(record.timestampMillis) }
+    var expanded by remember { mutableStateOf(false) }
+    val currentBaby = selectedBaby ?: babies.firstOrNull()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Editar higiene") },
+        text = {
+            Column {
+                Text("Data e hora", style = MaterialTheme.typography.labelMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                EditableDateTimeRow(
+                    selectedTimestamp = selectedTimestamp,
+                    onTimestampChange = { selectedTimestamp = it }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        value = currentBaby?.name ?: "Selecione o bebê",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Bebê") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                        modifier = Modifier
+                            .menuAnchor()
+                            .fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        babies.forEach { baby ->
+                            DropdownMenuItem(
+                                text = { Text(baby.name) },
+                                onClick = {
+                                    selectedBaby = baby
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                TextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Descrição (ex: banho, troca de fralda)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    currentBaby?.let {
+                        onConfirm(
+                            record.copy(
+                                babyId = it.id,
+                                note = note.trim(),
+                                timestampMillis = selectedTimestamp
+                            )
+                        )
+                    }
+                }
+            ) {
+                Text("Salvar")
             }
         },
         dismissButton = {

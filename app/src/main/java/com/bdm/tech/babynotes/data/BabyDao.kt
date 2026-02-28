@@ -3,6 +3,7 @@ package com.bdm.tech.babynotes.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -12,6 +13,9 @@ interface BabyDao {
 
     @Insert
     suspend fun insert(baby: Baby): Long
+
+    @Update
+    suspend fun update(baby: Baby)
 
     @Query("DELETE FROM babies WHERE id = :id")
     suspend fun deleteById(id: Long)

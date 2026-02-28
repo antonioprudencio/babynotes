@@ -103,6 +103,10 @@ class BabyNotesViewModel(
         viewModelScope.launch { repository.addBaby(name) }
     }
 
+    fun updateBaby(baby: Baby) {
+        viewModelScope.launch { repository.updateBaby(baby) }
+    }
+
     fun deleteBaby(id: Long) {
         viewModelScope.launch { repository.deleteBaby(id) }
     }
@@ -117,6 +121,18 @@ class BabyNotesViewModel(
 
     fun addHygiene(babyId: Long, note: String = "", timestampMillis: Long = System.currentTimeMillis()) {
         viewModelScope.launch { repository.addHygiene(babyId, note, timestampMillis) }
+    }
+
+    fun updateFeeding(record: FeedingRecord) {
+        viewModelScope.launch { repository.updateFeeding(record) }
+    }
+
+    fun updateMedicine(record: MedicineRecord) {
+        viewModelScope.launch { repository.updateMedicine(record) }
+    }
+
+    fun updateHygiene(record: HygieneRecord) {
+        viewModelScope.launch { repository.updateHygiene(record) }
     }
 
     fun deleteFeeding(id: Long) {

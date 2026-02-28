@@ -3,6 +3,7 @@ package com.bdm.tech.babynotes.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -12,6 +13,9 @@ interface HygieneDao {
 
     @Insert
     suspend fun insert(record: HygieneRecord)
+
+    @Update
+    suspend fun update(record: HygieneRecord)
 
     @Query("DELETE FROM hygiene WHERE id = :id")
     suspend fun deleteById(id: Long)

@@ -17,6 +17,7 @@ class BabyNotesRepository(
         babyDao.insert(Baby(name = name.trim()))
     }
 
+    suspend fun updateBaby(baby: Baby) = babyDao.update(baby)
     suspend fun deleteBaby(id: Long) = babyDao.deleteById(id)
 
     /**
@@ -55,6 +56,10 @@ class BabyNotesRepository(
             )
         )
     }
+
+    suspend fun updateFeeding(record: FeedingRecord) = feedingDao.update(record)
+    suspend fun updateMedicine(record: MedicineRecord) = medicineDao.update(record)
+    suspend fun updateHygiene(record: HygieneRecord) = hygieneDao.update(record)
 
     suspend fun deleteFeeding(id: Long) = feedingDao.deleteById(id)
     suspend fun deleteMedicine(id: Long) = medicineDao.deleteById(id)
