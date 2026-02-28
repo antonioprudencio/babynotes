@@ -573,6 +573,11 @@ private fun StatisticsTab(viewModel: BabyNotesViewModel) {
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.outline
                             )
+                            Text(
+                                "Última refeição: ${formatTimeSinceLastFeeding(stat.lastFeedingTimestampMillis)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.outline
+                            )
                             stat.averagePerDayMl?.let { avg ->
                                 Text(
                                     "Média por dia: ${avg.toInt()} ml",

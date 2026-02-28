@@ -14,8 +14,27 @@ data class BabyConsumptionStats(
     val babyName: String,
     val totalVolumeMl: Int,
     val feedingCount: Int,
-    val averagePerDayMl: Float?
+    val averagePerDayMl: Float?,
+    /** Timestamp da última refeição (qualquer período); null se nunca registrou. */
+    val lastFeedingTimestampMillis: Long?
 )
+
+/**
+ * Formata "tempo desde" a última refeição: "Há X min", "Há X h", "Há X dias" ou "Nunca".
+ */
+fun formatTimeSinceLastFeeding(lastFeedingMillis: Long?): String {
+    if (lastFeedingMillis == null) return "Nunca"
+    val diffMs = System.currentTimeMillis() - lastFeedingMillis
+    val diffMin = diffMs / (60 * 1000)
+    val diffHours = diffMs / (60 * 60 * 1000)
+    val diffDays = diffMs / (24 * 60 * 60 * 1000)
+    return when {
+        diffMin < 1 -> "Agora mesmo"
+        diffMin < 60 -> "Há $diffMin min"
+        diffHours < 24 -> "Há $diffHours h"
+        else -> "Há $diffDays dias"
+    }
+}
 
 object StatisticsHelper {
 

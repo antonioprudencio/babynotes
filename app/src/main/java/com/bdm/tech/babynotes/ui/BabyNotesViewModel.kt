@@ -64,6 +64,9 @@ class BabyNotesViewModel(
         val (start, end) = StatisticsHelper.periodRange(period)
         val inRange = feedingsList.filter { it.timestampMillis in start..end }
         val byBaby = inRange.groupBy { it.babyId }
+        val lastFeedingByBaby = feedingsList
+            .groupBy { it.babyId }
+            .mapValues { (_, list) -> list.maxOfOrNull { it.timestampMillis } }
         val days = StatisticsHelper.daysInPeriod(period)
         babiesList.map { baby ->
             val babyFeedings = byBaby[baby.id].orEmpty()
@@ -74,7 +77,8 @@ class BabyNotesViewModel(
                 babyName = baby.name,
                 totalVolumeMl = total,
                 feedingCount = babyFeedings.size,
-                averagePerDayMl = avg
+                averagePerDayMl = avg,
+                lastFeedingTimestampMillis = lastFeedingByBaby[baby.id]
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
