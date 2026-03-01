@@ -75,31 +75,26 @@ fun BabyNotesScreen(
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
-                text = { Text("Bebês") },
                 icon = { Icon(Icons.Default.ChildCare, contentDescription = null) }
             )
             Tab(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
-                text = { Text("Refeições") },
                 icon = { Icon(Icons.Default.Restaurant, contentDescription = null) }
             )
             Tab(
                 selected = selectedTab == 2,
                 onClick = { selectedTab = 2 },
-                text = { Text("Medicamentos") },
                 icon = { Icon(Icons.Default.Medication, contentDescription = null) }
             )
             Tab(
                 selected = selectedTab == 3,
                 onClick = { selectedTab = 3 },
-                text = { Text("Higiene") },
                 icon = { Icon(Icons.Default.Bathtub, contentDescription = null) }
             )
             Tab(
                 selected = selectedTab == 4,
                 onClick = { selectedTab = 4 },
-                text = { Text("Estatísticas") },
                 icon = { Icon(Icons.Default.BarChart, contentDescription = null) }
             )
         }

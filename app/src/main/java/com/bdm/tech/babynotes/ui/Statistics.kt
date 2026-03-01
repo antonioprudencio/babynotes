@@ -20,18 +20,21 @@ data class BabyConsumptionStats(
 )
 
 /**
- * Formata "tempo desde" a última refeição: "Há X min", "Há X h", "Há X dias" ou "Nunca".
+ * Formata "tempo desde" a última refeição: "Há X min", "Há Xh Ymin", "Há X dias" ou "Nunca".
  */
 fun formatTimeSinceLastFeeding(lastFeedingMillis: Long?): String {
     if (lastFeedingMillis == null) return "Nunca"
     val diffMs = System.currentTimeMillis() - lastFeedingMillis
-    val diffMin = diffMs / (60 * 1000)
-    val diffHours = diffMs / (60 * 60 * 1000)
-    val diffDays = diffMs / (24 * 60 * 60 * 1000)
+    val diffMin = (diffMs / (60 * 1000)).toInt()
+    val diffDays = (diffMs / (24 * 60 * 60 * 1000)).toInt()
     return when {
         diffMin < 1 -> "Agora mesmo"
         diffMin < 60 -> "Há $diffMin min"
-        diffHours < 24 -> "Há $diffHours h"
+        diffMin < 24 * 60 -> {
+            val hours = diffMin / 60
+            val minutes = diffMin % 60
+            if (minutes == 0) "Há ${hours}h" else "Há ${hours}h ${minutes}min"
+        }
         else -> "Há $diffDays dias"
     }
 }
